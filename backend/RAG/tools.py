@@ -10,7 +10,7 @@ import seaborn as sns
 
 from pydantic import BaseModel, Field
 from typing import List, Any, Dict
-from dataset_loader import dataset_loader as data
+import dataset_loader as data
 
 # =========================================================
 # EDA
@@ -52,10 +52,10 @@ class EDA_format(BaseModel):
 def EDA_tool(query: str) -> EDA_format:
     """Performs Exploratory Data Analysis on the uploaded CSV."""
 
-    if data is None:
+    if data.file_data is None:
         raise ValueError("CSV data has not been loaded.")
 
-    df = data
+    df = data.file_data
 
     return EDA_format(
         shape=str(df.shape),
@@ -104,10 +104,10 @@ class VisualizationOutput(BaseModel):
 def visualization_tool(query: str) -> VisualizationOutput:
     """Creates visualizations for every column."""
 
-    if data is None:
+    if data.file_data is None:
         raise ValueError("CSV data has not been loaded.")
 
-    df = data
+    df = data.file_data
 
     generated_plots = []
 
@@ -170,14 +170,14 @@ class CorrelationOutput(BaseModel):
 def correlation_tool(query: str) -> CorrelationOutput:
     """Generates a correlation heatmap for numerical columns."""
 
-    if data is None:
+    if data.file_data is None:
         raise ValueError("CSV data has not been loaded.")
 
     from pathlib import Path
 
     Path("plots").mkdir(exist_ok=True)
 
-    df = data
+    df = data.file_data
 
     numeric_df = df.select_dtypes(include="number")
 
@@ -250,13 +250,13 @@ class SummaryOutput(BaseModel):
 
 
 @tool
-def summary_tool(query: str) -> SummaryOutput:
+def summary_tool(query: str):
     """Generates a concise summary of the dataset."""
 
-    if data is None:
+    if data.file_data is None:
         raise ValueError("CSV data has not been loaded.")
 
-    df = data
+    df = data.file_data
 
     numerical_cols = (
         df.select_dtypes(include="number")
@@ -291,7 +291,7 @@ def summary_tool(query: str) -> SummaryOutput:
 
     return SummaryOutput(
         status="Success",
-        dataset_name=data.csv_path,
+        dataset_name=data.file_path,
         total_rows=df.shape[0],
         total_columns=df.shape[1],
         numerical_columns=numerical_cols,
