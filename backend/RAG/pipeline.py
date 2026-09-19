@@ -1,8 +1,8 @@
-from analysis_agent import build_analysis_agent
-from dataset_loader import dataset_loader
-from db import make_json,run_db
-from doctor_agent import run_doctor_agent
-from create_report import create_report
+from .analysis_agent import build_analysis_agent
+from .dataset_loader import dataset_loader
+from .db import make_json,run_db
+from .doctor_agent import run_doctor_agent
+from .create_report import create_report
 
 def run_pipeline(file) -> dict:
     print("Loading dataset...")

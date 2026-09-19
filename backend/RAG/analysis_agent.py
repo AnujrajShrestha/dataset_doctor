@@ -1,15 +1,14 @@
 from dotenv import load_dotenv
 from langchain.agents import create_agent
-from tools import EDA_tool,visualization_tool,correlation_tool,summary_tool
+from .tools import EDA_tool,visualization_tool,correlation_tool
 from langchain_groq import ChatGroq
-from langchain_core.prompts import ChatPromptTemplate
 
 load_dotenv()
 
 llm = ChatGroq(
     model="openai/gpt-oss-20b",
     max_retries=5,
-    temperature=0
+    temperature=0,
 )
     
 ANALYSIS_SYSTEM_PROMPT = """
@@ -23,7 +22,6 @@ Available tools:
 1. EDA_tool
 2. visualization_tool
 3. correlation_tool
-4. summary_tool
 
 
 =========================================================
@@ -38,15 +36,13 @@ EDA_tool
 
 Then use:
 
-summary_tool
-
-Then use:
-
 correlation_tool
 
 Then use:
 
 visualization_tool
+
+Then make summary
 
 
 =========================================================
@@ -164,6 +160,6 @@ IMPORTANT:
 def build_analysis_agent():
     return create_agent(
         model=llm,
-        tools=[EDA_tool,visualization_tool,correlation_tool,summary_tool],
+        tools=[EDA_tool,visualization_tool,correlation_tool],
         system_prompt= ANALYSIS_SYSTEM_PROMPT
     )

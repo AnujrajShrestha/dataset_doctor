@@ -21,7 +21,8 @@ def dataset_loader(path):
         raise ValueError(f"Unsupported file type: {path.suffix}")
 
     saved_path = UPLOAD_DIR / path.name
-    shutil.copy2(path, saved_path)
+    if path.resolve() != saved_path.resolve():
+        shutil.copy2(path, saved_path)
 
     file_path = saved_path
 
