@@ -149,23 +149,19 @@ def retrieve_context(query: str, k: int = 5):
 # GET CONTEXT AS STRING
 # =========================================================
 
-def get_context(query: str, k: int = 5) -> str:
-    """
-    Retrieves relevant documents and combines them
-    into a single context string for the Doctor Agent.
-    """
+def get_context(query: str, k: int = 2):
 
-    documents = retrieve_context(
-        query=query,
-        k=k
-    )
-
-    if not documents:
-        return "No relevant dataset analysis was found."
+    documents = retrieve_context(query, k)
 
     context = "\n\n".join(
         document.page_content
         for document in documents
     )
+
+    print("=" * 60)
+    print("RETRIEVED DOCUMENTS:", len(documents))
+    print("CONTEXT CHARACTERS:", len(context))
+    print("ESTIMATED TOKENS:", len(context) // 4)
+    print("=" * 60)
 
     return context

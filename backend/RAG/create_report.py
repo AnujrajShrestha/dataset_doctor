@@ -1,48 +1,33 @@
 from pathlib import Path
 from datetime import datetime
 
+BASE_DIR = Path(__file__).resolve().parent / "reports"
 
-REPORT_DIR = Path(__file__).parent / "reports"
-
-REPORT_DIR.mkdir(
-    parents=True,
-    exist_ok=True
-)
+REPORT_DIR = BASE_DIR / "reports"
+REPORT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def extract_doctor_response(doctor_result):
-    """
-    Extract the final AI response from the Doctor Agent.
-    """
 
     messages = doctor_result.get("messages", [])
 
     for message in reversed(messages):
-
         if getattr(message, "type", None) == "ai":
-
             return message.content
 
-    raise ValueError(
-        "No AI response found from Doctor Agent."
-    )
+    raise ValueError("No AI response found")
 
 
-def create_report(doctor_result, filename="doctor_report.md"):
-    """
-    Creates a Markdown report from the Doctor Agent response.
-    """
+def create_report(doctor_response):
 
-    doctor_response = extract_doctor_response(
-        doctor_result
-    )
+    if not isinstance(doctor_response, str):
+        raise TypeError(
+            f"Expected doctor_response to be str, got {type(doctor_response).__name__}"
+        )
 
-    timestamp = datetime.now().strftime(
-        "%Y-%m-%d %H:%M:%S"
-    )
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    report = f"""
-# 🩺 Dataset Doctor Report
+    report = f"""# 🩺 Dataset Doctor Report
 
 **Generated:** {timestamp}
 
@@ -55,11 +40,13 @@ def create_report(doctor_result, filename="doctor_report.md"):
 ## End of Report
 """
 
-    report_path = REPORT_DIR / filename
+    report_path = REPORT_DIR / "doctor_report.md"
 
     report_path.write_text(
         report,
         encoding="utf-8"
     )
+
+    print(f"Report saved to: {report_path}")
 
     return report_path
