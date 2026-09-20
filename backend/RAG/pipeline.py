@@ -2,7 +2,7 @@ from .analysis_agent import build_analysis_agent
 from .dataset_loader import dataset_loader
 from .db import make_json,run_db
 from .doctor_agent import run_doctor_agent
-from .create_report import create_report,extract_doctor_response
+from .create_report import create_report,extract_doctor_response,REPORT_DIR
 
 def run_pipeline(file) -> dict:
     print("Loading dataset...")
@@ -37,14 +37,22 @@ def run_pipeline(file) -> dict:
     print("Doctor agent is working...")
     print(" -" * 50)
 
+    # doctor_result = run_doctor_agent()
+    # doctor_response = extract_doctor_response(doctor_result)
+    
+    # report_path= create_report(doctor_response)
+    
     doctor_result = run_doctor_agent()
+
+    print("Doctor result:", doctor_result)
+    
     doctor_response = extract_doctor_response(doctor_result)
     
-    report_path= create_report(doctor_response)
+    report_path = create_report(doctor_response,REPORT_DIR)
     
     return {
         "analysis": json_content,
-        "doctor_report": doctor_result,
+        "doctor_report": doctor_response,
         "report_path": str(report_path)
     }
     

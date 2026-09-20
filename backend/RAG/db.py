@@ -158,10 +158,4 @@ def get_context(query: str, k: int = 2):
         for document in documents
     )
 
-    print("=" * 60)
-    print("RETRIEVED DOCUMENTS:", len(documents))
-    print("CONTEXT CHARACTERS:", len(context))
-    print("ESTIMATED TOKENS:", len(context) // 4)
-    print("=" * 60)
-
     return context

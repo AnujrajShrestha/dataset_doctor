@@ -1,11 +1,10 @@
 from pathlib import Path
 from datetime import datetime
 
-BASE_DIR = Path(__file__).resolve().parent / "reports"
+BASE_DIR = Path(__file__).resolve().parent
 
 REPORT_DIR = BASE_DIR / "reports"
 REPORT_DIR.mkdir(parents=True, exist_ok=True)
-
 
 def extract_doctor_response(doctor_result):
 
@@ -18,7 +17,7 @@ def extract_doctor_response(doctor_result):
     raise ValueError("No AI response found")
 
 
-def create_report(doctor_response):
+def create_report(doctor_response,REPORT_DIR):
 
     if not isinstance(doctor_response, str):
         raise TypeError(
