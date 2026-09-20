@@ -5,9 +5,10 @@ from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from pydantic import BaseModel
 from pathlib import Path
-import json
+import shutil
 
 from RAG.pipeline import run_pipeline
+from RAG.create_report import create_report
 
 load_dotenv()
 
@@ -21,7 +22,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).parent
 
 UPLOAD_DIR = BASE_DIR / "uploads"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
@@ -46,7 +47,7 @@ def home():
     }
 
 class ModelResponse(BaseModel):
-    doctor_report: dict
+    doctor_report: str
     report_path: str
     plot_files: list[str]
 
@@ -80,15 +81,11 @@ async def diagnose(file: UploadFile = File(...)):
             and plot.suffix.lower()
             in [".png", ".jpg", ".jpeg", ".webp", ".svg"]
         ]
-
-        report_path = REPORT_DIR / "doctor_report.md"
         
-        with open(report_path, 'w',encoding="utf-8") as fs:
-            json.dump(result['doctor_report'],fs,indent= 4,ensure_ascii= False)
-
+        report_path_backend= create_report(result['doctor_report'],REPORT_DIR)
         return {
             "doctor_report": result["doctor_report"],
-            "report_path": str(report_path),
+            "report_path": str(report_path_backend),
             "plot_files": plot_files
         }
 
