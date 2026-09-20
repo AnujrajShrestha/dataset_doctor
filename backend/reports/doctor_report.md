@@ -1,6 +1,6 @@
 # 🩺 Dataset Doctor Report
 
-**Generated:** 2026-09-20 11:36:31
+**Generated:** 2026-09-20 11:56:29
 
 ---
 
@@ -9,95 +9,87 @@
 ## Problems
 
 ### Problem 1  
-- **Problem:** Physiologically impossible zero values in **RestingBP** and **Cholesterol** (minimum = 0).  
-- **Evidence:** The statistical table shows `RestingBP` min = 0 and `Cholesterol` min = 0; the data‑quality section flags these as “likely data entry errors.”  
+- **Problem:** Zero values in **RestingBP** (minimum = 0)  
+- **Evidence:** Data Quality table lists “RestingBP: minimum value 0.0 (physiologically impossible)”. Statistical table shows Min = 0.0.  
 - **Severity:** **High**  
-- **Why it matters:** Zero blood pressure or cholesterol cannot occur in living patients; these values will distort summary statistics, correlation estimates, and model training if left unchanged.
+- **Why it matters:** Blood‑pressure cannot be zero; such entries will heavily distort any model that uses this feature, biasing coefficients or tree splits and reducing predictive performance.
 
 ### Problem 2  
-- **Problem:** Negative values in **Oldpeak** (minimum = –2.6).  
-- **Evidence:** Outliers/suspicious values section lists negative Oldpeak values; the distribution description notes a range of –2.6 to 6.2.  
-- **Severity:** **Medium**  
-- **Why it matters:** Oldpeak represents ST‑segment depression, which is defined as a non‑negative measurement in most clinical contexts. Negative entries may be recording mistakes and could mislead models that assume monotonic relationships.
+- **Problem:** Zero values in **Cholesterol** (minimum = 0)  
+- **Evidence:** Data Quality table notes “Cholesterol: minimum value 0.0 (physiologically impossible)”. Statistical table shows Min = 0.0.  
+- **Severity:** **High**  
+- **Why it matters:** Cholesterol values of 0 mg/dL are impossible in living patients. They act as extreme outliers, corrupting summary statistics, scaling, and model training.
 
 ### Problem 3  
-- **Problem:** Extreme high values in **Oldpeak** (values > 5 are rare and may be outliers).  
-- **Evidence:** Outliers section calls values > 5 “rare and may be extreme outliers.”  
+- **Problem:** Negative values in **Oldpeak** (range down to –2.6)  
+- **Evidence:** Outliers / suspicious values section reports “Oldpeak: negative values down to –2.6 (possible but should be verified)”. Statistical table shows Min = –2.6.  
 - **Severity:** **Medium**  
-- **Why it matters:** Extreme values can overly influence distance‑based algorithms and linear models, leading to unstable coefficients or poor generalisation.
+- **Why it matters:** While negative ST‑depression can occur in some ECG interpretations, many clinical datasets treat Oldpeak as non‑negative. Unchecked negatives may mislead the model or cause scaling issues.
 
 ### Problem 4  
-- **Problem:** Presence of outliers / suspicious values overall (zero BP/Cholesterol, negative and extreme Oldpeak).  
-- **Evidence:** Consolidated in the “Outliers / suspicious values” rows of the analysis.  
+- **Problem:** Extreme high values in **Oldpeak** (> 5)  
+- **Evidence:** Second analysis notes “values >5 are rare and may be extreme outliers”. Max = 6.2.  
 - **Severity:** **Medium**  
-- **Why it matters:** Outliers can bias model fitting, inflate error metrics, and reduce predictive performance, especially for algorithms sensitive to scale (e.g., logistic regression without regularisation).
+- **Why it matters:** Very high Oldpeak values are uncommon and could represent measurement error or rare clinical cases; they can overly influence distance‑based or linear models.
 
-*(No other problems such as missing values, duplicates, constant columns, high‑cardinality features, or data‑type mismatches were reported.)*  
-
----
+### Problem 5  
+- **Problem:** Moderate class imbalance in target **HeartDisease** (≈55 % positive, 45 % negative)  
+- **Evidence:** Both analyses state “HeartDisease is binary with a 55/45 split”.  
+- **Severity:** **Low**  
+- **Why it matters:** The imbalance is modest, but if left unaddressed some algorithms may bias toward the majority class, slightly affecting metrics such as accuracy.
 
 ## ML Readiness
 
 - **Readiness:** **75 %**  
-
 - **Evaluated dimensions:**  
   1. **Data completeness** – No missing entries reported (acceptable).  
-  2. **Duplicate quality** – 0 duplicate rows detected (acceptable).  
+  2. **Duplicate quality** – 0 duplicate rows (acceptable).  
   3. **Data‑type consistency** – All columns have appropriate types (acceptable).  
-  4. **Outlier situation** – Presence of impossible zeros, negative and extreme Oldpeak values (not acceptable).  
-  5. **Class balance** – Target `HeartDisease` is roughly 55 % / 45 % (acceptable).  
-  6. **Feature quality** – Invalid numeric entries (zeros, negatives) reduce overall feature reliability (not acceptable).  
-  7. **Target suitability** – Binary target present and well‑defined (acceptable).  
-  8. **Potential data leakage** – No leakage identified in the analysis (acceptable).
+  4. **Outlier situation** – Presence of impossible zeros, negatives, and extreme Oldpeak values (not acceptable).  
+  5. **Class balance** – Moderately balanced (acceptable).  
+  6. **Feature quality** – Invalid numeric entries degrade feature reliability (not acceptable).  
+  7. **Target suitability** – Binary target with reasonable distribution (acceptable).  
+  8. **Potential data leakage** – No leakage identified (acceptable).  
 
-- **Unknown dimensions:** None (all eight dimensions could be assessed from the provided analysis).
+- **Unknown dimensions:** *None* – every dimension could be assessed from the supplied analysis.  
 
-- **Reasoning:** Six of the eight dimensions meet the “acceptable” criterion, giving a readiness score of 6 / 8 = 75 %. The primary blockers are the outlier situation and feature quality, both tied to the same set of invalid numeric values.
-
----
+- **Reasoning:** Six of the eight evaluated dimensions are currently acceptable, giving a score of 6 / 8 = 75 %. The two dimensions that lower the score are the outlier situation and overall feature quality, both driven by the zero and implausible numeric values identified above.
 
 ## Prescriptions
 
 ### Prescription 1  
-- **Problem:** Zero values in **RestingBP** and **Cholesterol**.  
-- **Action:** Replace each zero with `NaN`, then impute using the median (or mean if distribution is roughly symmetric) of the respective column.  
-- **Reason:** Median imputation preserves the central tendency without being skewed by the long right‑tail of cholesterol; it also avoids introducing artificial low values that would bias models.
+- **Problem:** Zero values in **RestingBP**  
+- **Action:** Replace all 0 entries with `NaN`, then impute using the median (or mean) of the non‑zero RestingBP values. If the source data can be verified, correct the entries directly.  
+- **Reason:** Imputation restores a realistic distribution while preserving the sample size; median is robust to any remaining outliers.
 
 ### Prescription 2  
-- **Problem:** Negative **Oldpeak** values.  
-- **Action:** Flag any negative `Oldpeak` entries, set them to `NaN`, and impute with the median of the non‑negative `Oldpeak` values (or consider domain‑specific correction if a clinical rule permits).  
-- **Reason:** Negative ST‑depression is unlikely; treating them as missing and imputing a realistic non‑negative value prevents the model from learning a spurious negative relationship.
+- **Problem:** Zero values in **Cholesterol**  
+- **Action:** Same as Prescription 1 – convert zeros to `NaN` and impute with the median cholesterol level (or use a model‑based imputation if desired).  
+- **Reason:** Prevents a physiologically impossible value from skewing model training and statistical summaries.
 
 ### Prescription 3  
-- **Problem:** Extreme high **Oldpeak** values (> 5).  
-- **Action:** Review these records manually; if they are confirmed errors, treat as missing and impute, otherwise consider **winsorising** the `Oldpeak` column at the 95th percentile to cap extreme influence.  
-- **Reason:** Winsorising reduces the impact of rare extreme values while retaining the information that very high Oldpeak may be clinically relevant.
+- **Problem:** Negative **Oldpeak** values  
+- **Action:** Verify with domain experts or source documentation whether negative ST‑depression is valid. If deemed erroneous, set negatives to `NaN` and impute (median) or cap at zero.  
+- **Reason:** Guarantees that the feature reflects the intended clinical measurement; avoids feeding impossible values to the model.
 
 ### Prescription 4  
-- **Problem:** General outlier influence on numeric features.  
-- **Action:** After handling the specific issues above, apply a robust scaling method (e.g., `RobustScaler`) or use tree‑based models that are less sensitive to outliers.  
-- **Reason:** Even after cleaning, the distributions remain right‑skewed; robust scaling mitigates the effect of remaining long tails on distance‑based algorithms.
+- **Problem:** Extreme high **Oldpeak** values (> 5)  
+- **Action:** Flag records with Oldpeak > 5 for review. Options: (a) cap/winsorize at the 95th percentile, or (b) treat as outliers and consider removal if they are confirmed errors.  
+- **Reason:** Reduces undue influence of rare extreme points on models sensitive to scale while preserving genuine extreme cases if they are clinically valid.
 
 ### Prescription 5  
-- **Problem:** Categorical encoding for modeling.  
-- **Action:** Convert `Sex`, `ChestPainType`, `RestingECG`, `ExerciseAngina`, and `ST_Slope` to one‑hot encoded columns (or ordinal encoding if an inherent order is known).  
-- **Reason:** Machine‑learning algorithms require numeric input; one‑hot encoding preserves nominal information without imposing artificial ordinal relationships.
-
-### Prescription 6  
-- **Problem:** Potential class‑imbalance handling.  
-- **Action:** When splitting data, use **stratified** train/validation splits to preserve the ~55 % / 45 % class distribution; optionally apply class‑weighting in algorithms (e.g., `class_weight='balanced'` in logistic regression).  
-- **Reason:** Guarantees that both training and validation sets reflect the true prevalence, reducing bias in performance estimates.
-
----
+- **Problem:** Moderate class imbalance in **HeartDisease**  
+- **Action:** When splitting data, use stratified train/validation splits to preserve the 55/45 ratio. For algorithms that are sensitive to imbalance, apply class‑weighting (e.g., `class_weight='balanced'` in scikit‑learn) or consider mild oversampling/undersampling after validation.  
+- **Reason:** Ensures that performance metrics are not biased toward the majority class and that the model learns from both classes adequately.
 
 ## Priority Actions
 
-1. **Clean impossible numeric entries** – convert zeros in `RestingBP` and `Cholesterol` to missing and impute.  
-2. **Correct/handle negative and extreme `Oldpeak` values** – set negatives to missing, review extremes, and apply appropriate imputation or winsorising.  
-3. **Encode all categorical variables** (one‑hot or ordinal) to prepare the feature matrix for modeling.  
-4. **Perform a stratified train/validation split** to maintain the observed class distribution.  
-5. **Choose a modeling pipeline** that incorporates robust scaling or tree‑based learners to mitigate residual outlier effects.  
-6. **Document every cleaning and preprocessing step** for reproducibility and future audits.  
+1. **Clean impossible numeric values** – convert zeros in RestingBP and Cholesterol to missing and impute (median).  
+2. **Validate and correct Oldpeak** – address negative values and review extreme > 5 values.  
+3. **Document all cleaning steps** – keep a reproducible record of imputation and outlier handling.  
+4. **Encode categorical variables** (one‑hot or ordinal) after cleaning numeric fields.  
+5. **Create train/validation splits with stratification** to respect the modest class imbalance.  
+6. **Proceed to feature engineering / modeling** once the above cleaning is complete.  
 
 ---
 
